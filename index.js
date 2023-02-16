@@ -1,27 +1,54 @@
-import { Client, Routes } from 'discord.js'
-import { REST } from '@discordjs/rest'
+import fs from 'fs'
+import { Client, Collection, Routes } from 'discord.js'
+import { REST } from '@discordjs/rest'                      // deals with Discord's REST api
 import dotenv from 'dotenv'
+import { Player } from 'discord-player'
 
 dotenv.config()
 
 // create an instance of the Client class, pass in options object
-const client = new Client({ intents: ['Guilds', 'GuildMessages'] })
+const client = new Client({ intents: ['Guilds', 'GuildMessages', 'GuildVoiceStates'] })
 
 const rest = new REST({ version: '10'}).setToken(process.env.TOKEN)
+
+// init collection to map out commands into
+client.commands = new Collection()
+client.player = new Player(client, {
+    ytdlOptions: {
+        quality: "highestaudio",
+        highWaterMark: 1 >> 25
+    }
+})
+
+// grab files from /commands directory, for each file take the default export and map out into collection
+let commands = []
+
+// grab default exports from command files, map name into collection to send to discord API
+const commandFiles = fs.readdirSync("./commands").filter( async file => file.endsWith(".js"))
+for (const file of commandFiles){
+    const command = await import(`./commands/${file}`).then(item => item.default)
+    client.commands.set(command.data.name, command)
+    commands.push(command.data.toJSON())
+}
 
 // confirmation when bot client logs in
 client.on('ready', () => {
     console.log(`${client.user.username} logged in.`)
 })
 
-const StartUp = async () => {
+client.on('interactionCreate', (interaction) => {
+   async function handleCommand() {
+    if(!interaction.isChatInputCommand()) return   
 
-    const commands = [
-        {
-            name: 'test',
-            description: 'test description 1'
-        }
-    ]
+    const commandRequest = client.commands.get(interaction.commandName)
+    await interaction.deferReply()                      // gives bot more time to execute command before automatically timing out
+    await commandRequest.run({ client, interaction })
+   }
+   handleCommand()
+})
+
+// main start up command handling necessary launch operations
+const StartUp = async () => {
 
     try {
         //Sent put request to discord API to set slash commands, then log in bot
