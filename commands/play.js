@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { QueryType } from "discord-player";
 import { EmbedBuilder } from "discord.js";
 
+
 export default {
     data: new SlashCommandBuilder()
             .setName('play')
@@ -33,7 +34,6 @@ export default {
         }
 
         let embed = new EmbedBuilder()
-            .setColor(0x0099FF)
 
         if (interaction.options.getSubcommand() === "song"){
             let url = interaction.options.getString('url')
@@ -42,30 +42,37 @@ export default {
                 searchEngine: QueryType.YOUTUBE_VIDEO
             })
             if (result.tracks.length === 0){
-                return interaction.editReply('No results found.')
+                return interaction.editReply('Not a valid URL.')
             }
 
             const song = result.tracks[0]
             await songQueue.addTrack(song)
+
+            embed.setDescription(`${song.title}`)
+            .setFooter({text: `Duration: ${song.duration}`})
+            .setImage(song.thumbnail)
             
             console.log(songQueue)
-        } else if (interaction.options.getSubcommand() === 'playlist'){
+        } else if (interaction.options.getSubcommand() === 'playlist'){ // ONLY PLAYING FIRST SONG
             let url = interaction.options.getString('url')
             const result = await client.player.search(url, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.YOUTUBE_PLAYLIST
             })
             if (result.tracks.length === 0){
-                return interaction.editReply('No results found.')
+                return interaction.editReply('Not a valid URL.')
             }
 
-            const playlist = result.tracks[0]
-            await songQueue.addTrack(playlist)
-        }
+            const playlist = result.playlist
+            await songQueue.addTracks(result.tracks)
 
+            embed.setDescription(`${playlist.title}`)
+                 .setFooter({text: `Songs added: ${result.tracks.length}`})
+        }
 
         if (!songQueue.playing){
             await songQueue.play()
         }
+        await interaction.editReply({embeds: [embed]})
     }
 }
