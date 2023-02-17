@@ -1,7 +1,5 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
 import { QueryType } from "discord-player";
-import { EmbedBuilder } from "discord.js";
-
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -28,7 +26,7 @@ export default {
             return interaction.editReply('You must be in a VC.')
         }
         
-        const songQueue = await client.player.createQueue(interaction.guild)
+        const songQueue = await client.player.createQueue(interaction.guildId)
         if (!songQueue.connection){
             await songQueue.connect(interaction.member.voice.channel)
         }
@@ -48,11 +46,10 @@ export default {
             const song = result.tracks[0]
             await songQueue.addTrack(song)
 
-            embed.setDescription(`${song.title}`)
-            .setFooter({text: `Duration: ${song.duration}`})
+            embed.setDescription(`${song.title} by ${song.author}`)
+            .setFooter({text: `Duration: ${song.duration}         Requested by ${interaction.user.username}`})
             .setImage(song.thumbnail)
             
-            console.log(songQueue)
         } else if (interaction.options.getSubcommand() === 'playlist'){ // ONLY PLAYING FIRST SONG
             let url = interaction.options.getString('url')
             const result = await client.player.search(url, {
@@ -73,6 +70,7 @@ export default {
         if (!songQueue.playing){
             await songQueue.play()
         }
+
         await interaction.editReply({embeds: [embed]})
     }
 }
