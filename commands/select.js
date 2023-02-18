@@ -20,7 +20,7 @@ export default {
             return await interaction.editReply('Invalid track selected.')
         }
 
-        songQueue.skipTo(trackNumber - 1)
+        songQueue.skipTo(trackNumber - 2)
         await interaction.editReply(`Selected track ${trackNumber}.`)
     }
 }

@@ -16,8 +16,12 @@ client.commands = new Collection()
 client.player = new Player(client, {
     ytdlOptions: {
         quality: "highestaudio",
-        highWaterMark: 1 >> 25
+        highWaterMark: 1 >> 25,
     }
+})
+
+client.on('trackEnd', () => {
+    console.log('track ended')
 })
 
 // grab files from /commands directory, for each file take the default export and map out into collection
@@ -46,6 +50,8 @@ client.on('interactionCreate', (interaction) => {
    }
    handleCommand()
 })
+
+
 
 // main start up command handling necessary launch operations
 const StartUp = async () => {

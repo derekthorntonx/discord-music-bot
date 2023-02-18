@@ -13,7 +13,7 @@ export default {
 
         const current = songQueue.current
         songQueue.skip()
-
+        
         await interaction.editReply(`${current} skipped. `)
     }
 }
